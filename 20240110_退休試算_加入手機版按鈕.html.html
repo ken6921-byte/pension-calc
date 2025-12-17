@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta property="og:title" content="退休型不型 - 你的退休金試算神器">
+    <meta property="og:description" content="勞保、勞退、國保、社會福利，一鍵試算你的退休生活金！">
+    <meta property="og:type" content="website">
+
+    <title>退休型不型 - 你的退休金試算神器</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --lb-color: #3498db;
+            --lt-color: #e67e22;
+            --np-color: #2ecc71;
+            --wf-color: #9b59b6;
+            --bg-color: #f0f2f5;
+            --line-green: #00B900; /* LINE 官方綠色 */
+            --highlight-red: #e74c3c;
+        }
+        body {
+            font-family: "Microsoft JhengHei", "Heiti TC", sans-serif;
+            background-color: var(--bg-color);
+            padding: 20px;
+            color: #333;
+            line-height: 1.5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.05);
+            margin-bottom: 80px; /* 預留底部空間給手機版懸浮按鈕 */
+        }
+        h1 { 
+            text-align: center; color: var(--primary); margin-bottom: 5px; 
+            font-size: 2.2em; letter-spacing: 2px;
+        }
+        .subtitle { 
+            text-align: center; color: #7f8c8d; margin-bottom: 35px; font-weight: 300;
+        }
+        .section-header {
+            display: flex; align-items: center; border-bottom: 2px solid #eee;
+            padding-bottom: 10px; margin-top: 35px; margin-bottom: 20px;
+        }
+        .badge {
+            padding: 5px 12px; border-radius: 20px; color: white; font-weight: bold;
+            margin-right: 12px; font-size: 0.9em; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .bg-lb { background-color: var(--lb-color); }
+        .bg-lt { background-color: var(--lt-color); }
+        .bg-np { background-color: var(--np-color); }
+        .bg-wf { background-color: var(--wf-color); }
+        .section-title { font-size: 1.3em; font-weight: bold; color: var(--primary); }
+
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 600px) { .input-grid { grid-template-columns: 1fr; } }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
+        .hint-text { font-size: 0.85em; color: #888; margin-top: 4px; display: block; }
+        
+        .dynamic-hint {
+            font-size: 0.95em; color: #d35400; margin-bottom: 8px; font-weight: bold;
+            background: #fff8e1; padding: 8px 12px; border-radius: 6px; display: inline-block;
+            border-left: 4px solid #f39c12;
+            width: 100%; box-sizing: border-box;
+        }
+
+        input, select {
+            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px;
+            box-sizing: border-box; font-size: 1em; background: #fff;
+        }
+        input:focus, select:focus { outline: none; border-color: var(--lb-color); box-shadow: 0 0 5px rgba(52, 152, 219, 0.3); }
+        
+        .checkbox-group {
+            display: flex; align-items: center; background: #f9f9f9; padding: 15px;
+            border-radius: 8px; border: 1px solid #eee; cursor: pointer;
+        }
+        .checkbox-group input { width: auto; margin-right: 10px; transform: scale(1.2); }
+        
+        .btn-group { display: grid; grid-template-columns: 3fr 1fr; gap: 15px; margin-top: 40px; }
+
+        .btn-calc {
+            width: 100%; padding: 16px; background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white; border: none; border-radius: 10px; font-size: 1.2em; cursor: pointer;
+            font-weight: bold; box-shadow: 0 4px 15px rgba(44, 62, 80, 0.3);
+            transition: transform 0.2s;
+        }
+        .btn-calc:hover { transform: translateY(-2px); }
+
+        .btn-reset {
+            width: 100%; padding: 16px; background: #ecf0f1; color: #7f8c8d;
+            border: 1px solid #bdc3c7; border-radius: 10px; font-size: 1em; cursor: pointer;
+            font-weight: bold; transition: 0.2s;
+        }
+        .btn-reset:hover { background: #dfe6e9; color: #2c3e50; }
+
+        #resultArea { display: none; margin-top: 40px; animation: fadeIn 0.6s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 15px; border-radius: 8px; overflow: hidden; border: 1px solid #eee; }
+        th, td { padding: 15px; text-align: center; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f9fa; color: #666; font-weight: bold; }
+        .total-row { background-color: #fff8e1; color: #d35400; font-weight: bold; font-size: 1.1em; }
+        
+        .bar-chart-container {
+            display: flex; height: 35px; width: 100%; border-radius: 20px;
+            overflow: hidden; margin-top: 20px; background-color: #eee;
+        }
+        .bar-segment {
+            height: 100%; display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 0.85em; font-weight: bold; transition: width 1s ease-in-out;
+        }
+
+        .note {
+            font-size: 0.9em; color: #555; margin-top: 30px; background: #f8f9fa;
+            padding: 20px; border-radius: 8px; line-height: 1.8; border-left: 4px solid var(--primary);
+        }
+        .hl { color: var(--highlight-red); font-weight: bold; }
+
+        /* --- 宣傳功能樣式 (優化版) --- */
+        
+        .promo-fab {
+            position: fixed; bottom: 30px; right: 30px;
+            background-color: var(--line-green); color: white;
+            padding: 15px 25px; border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(0, 185, 0, 0.4);
+            cursor: pointer; z-index: 1000;
+            font-weight: bold; font-size: 1.1em;
+            display: flex; align-items: center; gap: 10px;
+            transition: transform 0.3s;
+            animation: bounce 2s infinite;
+        }
+        .promo-fab:hover { transform: scale(1.05); background-color: #00a000; }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-10px);}
+            60% {transform: translateY(-5px);}
+        }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none; justify-content: center; align-items: center;
+            z-index: 2000; backdrop-filter: blur(3px);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-content {
+            background: white; padding: 40px; border-radius: 15px;
+            text-align: center; max-width: 400px; width: 90%;
+            position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: popUp 0.3s;
+        }
+        
+        @keyframes popUp { from {transform: scale(0.8); opacity: 0;} to {transform: scale(1); opacity: 1;} }
+
+        .modal-close {
+            position: absolute; top: 15px; right: 15px;
+            font-size: 24px; color: #999; cursor: pointer;
+            width: 30px; height: 30px; line-height: 30px;
+        }
+        .modal-close:hover { color: #333; }
+
+        .qr-image {
+            width: 200px; height: 200px; margin: 20px auto;
+            border: 2px solid #eee; padding: 10px; border-radius: 10px;
+        }
+
+        .line-btn {
+            display: block; width: 100%; padding: 15px;
+            background-color: var(--line-green); color: white;
+            text-decoration: none; border-radius: 8px;
+            font-weight: bold; font-size: 1.1em;
+            margin-top: 15px;
+        }
+        .line-btn:hover { background-color: #00a000; }
+
+        /* --- 手機版專屬優化 (Mobile Optimization) --- */
+        /* 當螢幕小於 600px (手機) 時，隱藏 QR Code，只留大按鈕 */
+        @media (max-width: 600px) {
+            .qr-image { display: none; } /* 隱藏 QR Code */
+            .modal-content { padding: 30px 20px; } /* 調整內距 */
+            .promo-fab { 
+                bottom: 20px; right: 20px; /* 調整按鈕位置 */
+                padding: 12px 20px; font-size: 1em;
+            }
+        }
+
+        @media print {
+            body { background-color: #fff; padding: 0; }
+            .container { box-shadow: none; max-width: 100%; padding: 0; }
+            .input-grid, .section-header, .form-group, .btn-group, .subtitle, .promo-fab, .modal-overlay { display: none; }
+            #resultArea { display: block !important; margin-top: 0; }
+            h1 { font-size: 1.8em; margin-bottom: 20px; }
+            .note::after { content: " (此報表由 退休型不型 網站產生)"; display: block; margin-top: 10px; font-style: italic; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>退休型不型</h1>
+    <div class="subtitle">勞保・勞退・國保・社福｜全方位試算</div>
+
+    <div class="section-header">
+        <span class="badge bg-lb">1</span>
+        <span class="section-title">勞保 (Labor Insurance)</span>
+    </div>
+    <div class="input-grid">
+        <div class="form-group">
+            <label>您的出生年份 (西元)</label>
+            <input type="number" id="birthYear" placeholder="例如: 1985" oninput="updateSmartHint()">
+        </div>
+        <div class="form-group">
+            <label>勞保投保年資 (年)</label>
+            <input type="number" id="lbYears" placeholder="例如: 30" step="0.5">
+            <span class="hint-text" style="color:#e67e22;">💡 月領年資無上限 / 一次領上限 45 基數</span>
+        </div>
+        <div class="form-group">
+            <label>最高 60 個月平均薪資</label>
+            <input type="number" id="lbSalary" placeholder="例如: 45800">
+        </div>
+        
+        <div class="form-group">
+            <label>退休時機 (展延/減給)</label>
+            <div id="smartAgeHint" class="dynamic-hint" style="display:none;"></div>
+            <select id="lbRetireTime" onchange="updateSmartHint()">
+                <option value="-20">提早 5 年 (減給 20%)</option>
+                <option value="-16">提早 4 年 (減給 16%)</option>
+                <option value="-12">提早 3 年 (減給 12%)</option>
+                <option value="-8">提早 2 年 (減給 8%)</option>
+                <option value="-4">提早 1 年 (減給 4%)</option>
+                <option value="0" selected>符合法定年齡 (正常給付)</option>
+                <option value="4">延後 1 年 (增給 4%)</option>
+                <option value="8">延後 2 年 (增給 8%)</option>
+                <option value="12">延後 3 年 (增給 12%)</option>
+                <option value="16">延後 4 年 (增給 16%)</option>
+                <option value="20">延後 5 年 (增給 20%)</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="section-header">
+        <span class="badge bg-lt">2</span>
+        <span class="section-title">勞退新制 (Pension Fund)</span>
+    </div>
+    <div class="input-grid">
+        <div class="form-group">
+            <label>個人專戶累積總金額</label>
+            <input type="number" id="ltBalance" placeholder="可至勞保局查詢">
+            <span class="hint-text">💡 參考值：國人平均提撥累積金額約 60 萬</span>
+        </div>
+        <div class="form-group">
+            <label>預計領取年數 (自訂餘命)</label>
+            <input type="number" id="lifeExpectancy" value="24" min="1" max="50">
+            <span class="hint-text">預設 24 年 (依平均餘命估算)</span>
+        </div>
+    </div>
+
+    <div class="section-header">
+        <span class="badge bg-np">3</span>
+        <span class="section-title">國民年金 (國保)</span>
+    </div>
+    <div class="input-grid">
+        <div class="form-group">
+            <label>國保年資 (年)</label>
+            <input type="number" id="npYears" placeholder="例如: 0" step="0.5">
+        </div>
+        <div class="form-group">
+            <label>月投保金額</label>
+            <input type="number" id="npSalary" value="19761" readonly style="background:#eee; color:#888;">
+        </div>
+    </div>
+
+    <div class="section-header">
+        <span class="badge bg-wf">4</span>
+        <span class="section-title">其他福利 (社會救助)</span>
+    </div>
+    <div class="form-group">
+        <label class="checkbox-group">
+            <input type="checkbox" id="welfareCheck">
+            <div>
+                <strong>符合「中低收入老人生活津貼」資格</strong><br>
+                <span style="font-size:0.85em; color:#777; font-weight:normal;">適用於退休後無穩定收入且資產低於標準者 (預估 $3,879)</span>
+            </div>
+        </label>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn-calc" onclick="calculateAll()">試算我的退休生活</button>
+        <button class="btn-reset" onclick="resetAll()">清除</button>
+    </div>
+
+    <div id="resultArea">
+        <h3 style="text-align:center; color:#2c3e50; margin-bottom:20px;">💰 試算結果分析</h3>
+        
+        <div style="text-align:center; font-size:0.9em; color:#555; margin-bottom:5px;">每月收入組成結構</div>
+        <div class="bar-chart-container" id="barChart"></div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>來源項目</th>
+                    <th>月領金額 (每月)</th>
+                    <th>一次領 (整筆)</th>
+                </tr>
+            </thead>
+            <tbody id="resultBody"></tbody>
+            <tfoot>
+                <tr class="total-row">
+                    <td>總計預估</td>
+                    <td id="totalMonthly">0</td>
+                    <td id="totalLumpSum">0</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="note">
+            <h4 style="margin-top:0; color:#2c3e50;">💡 福利小補帖：</h4>
+            <ul style="padding-left: 20px;">
+                <li><strong>勞保</strong>：<span class="hl">主要退休收入來源</span>，可選擇<span class="hl">提前或延後領取</span>。<br><span style="font-size:0.9em; color:#666;">(法定年齡：依出生年次不同，介於 60~65 歲)</span></li>
+                <li><strong>勞退</strong>：您個人的儲蓄帳戶，<span class="hl">領完就沒了</span> (此處以攤提方式模擬月領)。</li>
+                <li><strong>國保</strong>：針對<span class="hl">未參加勞保期間</span>的補貼。</li>
+                <li><strong>中低收入老人生活津貼</strong>：這屬於<span class="hl">社會救助</span>。若您的家庭總收入平均分配每人每月<span class="hl">低於最低生活費 2.5 倍</span> (且未超過一定資產上限)，可向戶籍地公所申請。目前金額約為 $3,879 ~ $7,759 (本試算以 $3,879 估計)。</li>
+                <li style="margin-top:10px; list-style:none;">⚠️ <strong>注意</strong>：以上金額為預估值，<span class="hl">實際金額以政府核定為準</span>。</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="promo-fab" onclick="openModal()">
+    💬 點我了解 / 專人諮詢
+</div>
+
+<div id="lineModal" class="modal-overlay" onclick="closeModal(event)">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeModalBtn()">&times;</span>
+        
+        <h3 style="color:#2c3e50; margin-bottom:10px;">想了解更完整的退休規劃？</h3>
+        <p style="color:#666; margin-bottom:20px;">加入官方 LINE 好友，獲得最新資訊與免費諮詢！</p>
+        
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://line.me/ti/p/YOUR_LINE_ID" alt="LINE QR Code" class="qr-image">
+        
+        <a href="https://line.me/ti/p/YOUR_LINE_ID" target="_blank" class="line-btn">
+            加入 LINE 好友
+        </a>
+    </div>
+</div>
+<script>
+    function openModal() { document.getElementById('lineModal').style.display = 'flex'; }
+    function closeModal(event) { if (event.target.id === 'lineModal') document.getElementById('lineModal').style.display = 'none'; }
+    function closeModalBtn() { document.getElementById('lineModal').style.display = 'none'; }
+
+    function updateSmartHint() {
+        const year = parseInt(document.getElementById('birthYear').value);
+        const hintBox = document.getElementById('smartAgeHint');
+        const percentage = parseInt(document.getElementById('lbRetireTime').value);
+        
+        hintBox.style.display = 'inline-block';
+        if (!year || year < 1900 || year > 2100) {
+            hintBox.innerHTML = '<span style="color:#7f8c8d;">請先輸入上方「出生年份」以計算退休年齡</span>';
+            return;
+        }
+
+        let baseAge = 60;
+        if (year >= 1962) { baseAge = 65; } 
+        else if (year === 1958) { baseAge = 61; } 
+        else if (year === 1959) { baseAge = 62; } 
+        else if (year === 1960) { baseAge = 63; } 
+        else if (year === 1961) { baseAge = 64; }
+
+        const shiftYears = percentage / 4;
+        const finalAge = baseAge + shiftYears;
+        let actionText = "";
+        if (shiftYears < 0) actionText = ` - ${Math.abs(shiftYears)} 年 (提前)`;
+        else if (shiftYears > 0) actionText = ` + ${shiftYears} 年 (延後)`;
+
+        if (shiftYears !== 0) {
+            hintBox.innerHTML = `💡 法定 ${baseAge} 歲${actionText} = <span style="font-size:1.1em; color:#c0392b; background:#fff;">${finalAge} 歲退休</span>`;
+        } else {
+            hintBox.innerHTML = `💡 依據您的出生年，法定請領年齡為：${baseAge} 歲`;
+        }
+    }
+
+    function calculateAll() {
+        const lbYears = parseFloat(document.getElementById('lbYears').value) || 0;
+        const lbSalary = parseFloat(document.getElementById('lbSalary').value) || 0;
+        const lbPercentage = parseInt(document.getElementById('lbRetireTime').value); 
+
+        let lbMonthlyA = (lbSalary * lbYears * 0.00775) + 3000;
+        let lbMonthlyB = (lbSalary * lbYears * 0.0155);
+        let lbBaseMonthly = Math.max(lbMonthlyA, lbMonthlyB);
+        let lbMonthly = Math.round(lbBaseMonthly * (1 + (lbPercentage / 100)));
+
+        let lbLumpSumUnits = (lbYears <= 15) ? lbYears * 1 : 15 + ((lbYears - 15) * 2);
+        if (lbLumpSumUnits > 45) lbLumpSumUnits = 45; 
+        let lbLumpSum = Math.round(lbSalary * lbLumpSumUnits);
+
+        const ltBalance = parseFloat(document.getElementById('ltBalance').value) || 0;
+        const lifeYears = parseFloat(document.getElementById('lifeExpectancy').value) || 24;
+        
+        let ltLumpSum = ltBalance;
+        let ltMonths = lifeYears * 12;
+        let ltMonthly = (ltBalance > 0 && ltMonths > 0) ? Math.round(ltBalance / ltMonths) : 0;
+
+        const npYears = parseFloat(document.getElementById('npYears').value) || 0;
+        const npSalary = 19761; 
+        let npMonthlyA = (npSalary * npYears * 0.0065) + 4049;
+        let npMonthlyB = (npSalary * npYears * 0.013);
+        let npMonthly = (npYears > 0) ? Math.round(Math.max(npMonthlyA, npMonthlyB)) : 0;
+        let npLumpSum = 0; 
+
+        const isWelfare = document.getElementById('welfareCheck').checked;
+        let wfMonthly = isWelfare ? 3879 : 0;
+
+        const totalMonthly = lbMonthly + ltMonthly + npMonthly + wfMonthly;
+        const totalLumpSum = lbLumpSum + ltLumpSum;
+
+        const tbody = document.getElementById('resultBody');
+        let wfDisplay = isWelfare ? 
+            `<tr>
+                <td style="text-align:left;"><span style="color:var(--wf-color);">●</span> 社會福利津貼</td>
+                <td style="color:#2980b9;">$${wfMonthly.toLocaleString()}</td>
+                <td style="color:#bbb;">-</td>
+            </tr>` : '';
+
+        tbody.innerHTML = `
+            <tr>
+                <td style="text-align:left;">
+                    <span style="color:var(--lb-color);">●</span> 勞保年金 
+                    <small style="color:#999;">(${lbPercentage !== 0 ? (lbPercentage > 0 ? '+' : '') + lbPercentage + '%' : '標準'})</small>
+                </td>
+                <td style="color:#2980b9; font-weight:bold;">$${lbMonthly.toLocaleString()}</td>
+                <td style="color:#27ae60;">$${lbLumpSum.toLocaleString()}</td>
+            </tr>
+            <tr>
+                <td style="text-align:left;">
+                    <span style="color:var(--lt-color);">●</span> 勞退新制
+                    <small style="color:#999;">(分${lifeYears}年)</small>
+                </td>
+                <td style="color:#2980b9;">$${ltMonthly.toLocaleString()}</td>
+                <td style="color:#27ae60;">$${ltLumpSum.toLocaleString()}</td>
+            </tr>
+            <tr>
+                <td style="text-align:left;"><span style="color:var(--np-color);">●</span> 國民年金</td>
+                <td style="color:#2980b9;">$${npMonthly.toLocaleString()}</td>
+                <td style="color:#bbb;">-</td>
+            </tr>
+            ${wfDisplay}
+        `;
+
+        document.getElementById('totalMonthly').innerText = "$" + totalMonthly.toLocaleString();
+        document.getElementById('totalLumpSum').innerText = "$" + totalLumpSum.toLocaleString();
+
+        const chart = document.getElementById('barChart');
+        if (totalMonthly > 0) {
+            const pLB = (lbMonthly / totalMonthly) * 100;
+            const pLT = (ltMonthly / totalMonthly) * 100;
+            const pNP = (npMonthly / totalMonthly) * 100;
+            const pWF = (wfMonthly / totalMonthly) * 100;
+
+            let html = '';
+            if(pLB > 0) html += `<div class="bar-segment bg-lb" style="width:${pLB}%">勞保 ${Math.round(pLB)}%</div>`;
+            if(pLT > 0) html += `<div class="bar-segment bg-lt" style="width:${pLT}%">勞退 ${Math.round(pLT)}%</div>`;
+            if(pNP > 0) html += `<div class="bar-segment bg-np" style="width:${pNP}%">國保 ${Math.round(pNP)}%</div>`;
+            if(pWF > 0) html += `<div class="bar-segment bg-wf" style="width:${pWF}%">福利 ${Math.round(pWF)}%</div>`;
+            
+            chart.innerHTML = html;
+        } else {
+            chart.innerHTML = `<div style="width:100%; text-align:center; line-height:35px; color:#aaa;">請輸入資料開始試算</div>`;
+        }
+
+        document.getElementById('resultArea').style.display = 'block';
+    }
+
+    function resetAll() {
+        document.querySelectorAll('input').forEach(input => {
+            if(input.type === 'checkbox') input.checked = false;
+            else if(input.readOnly === false && input.id !== 'lifeExpectancy') input.value = '';
+        });
+        document.getElementById('lbRetireTime').value = "0";
+        document.getElementById('lifeExpectancy').value = "24";
+        document.getElementById('resultArea').style.display = 'none';
+        document.getElementById('smartAgeHint').style.display = 'none';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+</script>
+
+</body>
+</html>
