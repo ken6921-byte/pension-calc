@@ -16,7 +16,7 @@
             --np-color: #2ecc71;
             --wf-color: #9b59b6;
             --bg-color: #f0f2f5;
-            --line-green: #00B900; /* LINE 官方綠色 */
+            --line-green: #06c755;
             --highlight-red: #e74c3c;
         }
         body {
@@ -33,7 +33,7 @@
             padding: 30px;
             border-radius: 15px;
             box-shadow: 0 8px 25px rgba(0,0,0,0.05);
-            margin-bottom: 80px; /* 預留底部空間給手機版懸浮按鈕 */
+            margin-bottom: 80px; 
         }
         h1 { 
             text-align: center; color: var(--primary); margin-bottom: 5px; 
@@ -122,8 +122,7 @@
         }
         .hl { color: var(--highlight-red); font-weight: bold; }
 
-        /* --- 宣傳功能樣式 (優化版) --- */
-        
+        /* --- 懸浮按鈕與彈窗 --- */
         .promo-fab {
             position: fixed; bottom: 30px; right: 30px;
             background-color: var(--line-green); color: white;
@@ -137,6 +136,18 @@
         }
         .promo-fab:hover { transform: scale(1.05); background-color: #00a000; }
         
+        .settings-fab {
+            position: fixed; bottom: 30px; left: 30px;
+            background-color: #fff; color: #999;
+            width: 40px; height: 40px; border-radius: 50%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            cursor: pointer; z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2em; border: 1px solid #eee;
+            transition: 0.3s;
+        }
+        .settings-fab:hover { color: var(--primary); transform: rotate(90deg); }
+
         @keyframes bounce {
             0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
             40% {transform: translateY(-10px);}
@@ -178,24 +189,38 @@
             text-decoration: none; border-radius: 8px;
             font-weight: bold; font-size: 1.1em;
             margin-top: 15px;
+            border: none; cursor: pointer;
         }
         .line-btn:hover { background-color: #00a000; }
+        
+        .copy-link-box {
+            background: #f1f2f6; padding: 10px; border-radius: 5px;
+            margin-top: 15px; font-size: 0.85em; color: #555;
+            word-break: break-all; cursor: pointer;
+            border: 1px dashed #ccc;
+        }
 
-        /* --- 手機版專屬優化 (Mobile Optimization) --- */
-        /* 當螢幕小於 600px (手機) 時，隱藏 QR Code，只留大按鈕 */
+        /* 鎖定相關樣式 */
+        .lock-screen { display: block; }
+        .setting-screen { display: none; }
+        
+        .password-input {
+            width: 100%; padding: 12px; font-size: 1.2em; text-align: center;
+            letter-spacing: 5px; margin-bottom: 15px;
+            border: 2px solid #ddd; border-radius: 8px;
+        }
+
         @media (max-width: 600px) {
-            .qr-image { display: none; } /* 隱藏 QR Code */
-            .modal-content { padding: 30px 20px; } /* 調整內距 */
-            .promo-fab { 
-                bottom: 20px; right: 20px; /* 調整按鈕位置 */
-                padding: 12px 20px; font-size: 1em;
-            }
+            .qr-image { display: none; }
+            .modal-content { padding: 30px 20px; }
+            .promo-fab { bottom: 20px; right: 20px; padding: 12px 20px; font-size: 1em; }
+            .settings-fab { bottom: 20px; left: 20px; }
         }
 
         @media print {
             body { background-color: #fff; padding: 0; }
             .container { box-shadow: none; max-width: 100%; padding: 0; }
-            .input-grid, .section-header, .form-group, .btn-group, .subtitle, .promo-fab, .modal-overlay { display: none; }
+            .input-grid, .section-header, .form-group, .btn-group, .subtitle, .promo-fab, .modal-overlay, .settings-fab { display: none; }
             #resultArea { display: block !important; margin-top: 0; }
             h1 { font-size: 1.8em; margin-bottom: 20px; }
             .note::after { content: " (此報表由 退休型不型 網站產生)"; display: block; margin-top: 10px; font-style: italic; }
@@ -299,10 +324,8 @@
 
     <div id="resultArea">
         <h3 style="text-align:center; color:#2c3e50; margin-bottom:20px;">💰 試算結果分析</h3>
-        
         <div style="text-align:center; font-size:0.9em; color:#555; margin-bottom:5px;">每月收入組成結構</div>
         <div class="bar-chart-container" id="barChart"></div>
-
         <table>
             <thead>
                 <tr>
@@ -320,7 +343,6 @@
                 </tr>
             </tfoot>
         </table>
-
         <div class="note">
             <h4 style="margin-top:0; color:#2c3e50;">💡 福利小補帖：</h4>
             <ul style="padding-left: 20px;">
@@ -334,77 +356,187 @@
     </div>
 </div>
 
-<div class="promo-fab" onclick="openModal()">
+<div class="promo-fab" onclick="openContactModal()">
     💬 點我了解 / 專人諮詢
 </div>
+<div class="settings-fab" onclick="openSettingsModal()" title="業務設定">
+    ⚙️
+</div>
 
-<div id="lineModal" class="modal-overlay" onclick="closeModal(event)">
+<div id="contactModal" class="modal-overlay" onclick="closeModal(event, 'contactModal')">
     <div class="modal-content">
-        <span class="modal-close" onclick="closeModalBtn()">&times;</span>
-        
+        <span class="modal-close" onclick="document.getElementById('contactModal').style.display='none'">&times;</span>
         <h3 style="color:#2c3e50; margin-bottom:10px;">想了解更完整的退休規劃？</h3>
         <p style="color:#666; margin-bottom:20px;">加入官方 LINE 好友，獲得最新資訊與免費諮詢！</p>
-        
-        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://line.me/ti/p/YOUR_LINE_ID" alt="LINE QR Code" class="qr-image">
-        
-        <a href="https://line.me/ti/p/YOUR_LINE_ID" target="_blank" class="line-btn">
-            加入 LINE 好友
-        </a>
+        <img id="dynamicQr" src="" alt="LINE QR Code" class="qr-image">
+        <a id="dynamicBtn" href="" target="_blank" class="line-btn">加入 LINE 好友</a>
     </div>
 </div>
-<script>
-    function openModal() { document.getElementById('lineModal').style.display = 'flex'; }
-    function closeModal(event) { if (event.target.id === 'lineModal') document.getElementById('lineModal').style.display = 'none'; }
-    function closeModalBtn() { document.getElementById('lineModal').style.display = 'none'; }
 
+<div id="settingsModal" class="modal-overlay" onclick="closeModal(event, 'settingsModal')">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeSettings()">&times;</span>
+        
+        <div id="lockScreen" class="lock-screen">
+            <h3 style="color:#2c3e50;">🔒 業務專區</h3>
+            <p style="font-size:0.9em; color:#666;">請輸入授權碼以存取設定功能</p>
+            <input type="password" id="authCode" class="password-input" placeholder="****" maxlength="8">
+            <button class="line-btn" style="background:#2c3e50;" onclick="verifyCode()">驗證</button>
+            <p id="authMsg" style="color:red; font-size:0.9em; margin-top:10px;"></p>
+        </div>
+
+        <div id="settingScreen" class="setting-screen">
+            <h3 style="color:#2c3e50;">⚙️ 業務專屬設定</h3>
+            <p style="font-size:0.9em; color:#666; margin-bottom:20px;">輸入 ID，產生您的專屬試算連結。</p>
+            <div class="form-group" style="text-align:left;">
+                <label>您的 LINE ID (例如 Ken6921)</label>
+                <input type="text" id="agentLineId" placeholder="輸入 ID" oninput="generateAgentLink()">
+            </div>
+            <div id="agentLinkBox" class="copy-link-box" onclick="copyAgentLink()" style="display:none;"></div>
+            <div id="copyMsg" style="color:var(--line-green); font-size:0.8em; margin-top:5px; height:1.2em;"></div>
+            <button class="line-btn" style="background:#2c3e50; margin-top:10px;" onclick="saveAndUse()">確認並儲存設定</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ========== 核心設定區 ==========
+    // 1. 這裡填你自己的 LINE ID
+    const DEFAULT_LINE_ID = "Ken6921"; 
+    
+    // 2. 這裡設定「業務專區」的密碼
+    const AUTH_PASSWORD = "8888"; 
+    // =============================
+
+    let currentLineId = DEFAULT_LINE_ID;
+
+    window.onload = function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const lineParam = urlParams.get('line');
+        if (lineParam) {
+            currentLineId = lineParam;
+        } else {
+            const savedId = localStorage.getItem('my_agent_line_id');
+            if (savedId) currentLineId = savedId;
+        }
+        updateContactInfo(currentLineId);
+    };
+
+    function updateContactInfo(id) {
+        let cleanId = id.trim();
+        // LINE 連結格式 (如果是連結就直接用，是ID就加前綴)
+        let linkUrl = cleanId.startsWith('http') ? cleanId : `https://line.me/ti/p/~${cleanId}`;
+        
+        document.getElementById('dynamicBtn').href = linkUrl;
+        document.getElementById('dynamicQr').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(linkUrl)}`;
+    }
+
+    // --- 密碼驗證邏輯 ---
+    function openSettingsModal() {
+        // 每次打開都先重置回鎖定狀態
+        document.getElementById('lockScreen').style.display = 'block';
+        document.getElementById('settingScreen').style.display = 'none';
+        document.getElementById('authCode').value = '';
+        document.getElementById('authMsg').innerText = '';
+        
+        document.getElementById('settingsModal').style.display = 'flex';
+        // 如果已經有設定過 ID，先填入
+        document.getElementById('agentLineId').value = (currentLineId === DEFAULT_LINE_ID) ? '' : currentLineId;
+    }
+
+    function verifyCode() {
+        const input = document.getElementById('authCode').value;
+        if (input === AUTH_PASSWORD) {
+            // 密碼正確，解鎖
+            document.getElementById('lockScreen').style.display = 'none';
+            document.getElementById('settingScreen').style.display = 'block';
+            generateAgentLink(); // 預先生成一次
+        } else {
+            document.getElementById('authMsg').innerText = '授權碼錯誤';
+        }
+    }
+
+    function closeSettings() {
+        document.getElementById('settingsModal').style.display = 'none';
+    }
+
+    function closeModal(event, modalId) {
+        if (event.target.id === modalId) document.getElementById(modalId).style.display = 'none';
+    }
+    
+    function openContactModal() { document.getElementById('contactModal').style.display = 'flex'; }
+
+    // --- 業務連結生成邏輯 ---
+    function generateAgentLink() {
+        const inputId = document.getElementById('agentLineId').value.trim();
+        const box = document.getElementById('agentLinkBox');
+        
+        if (inputId) {
+            // 抓取當前網址 (去掉後面的參數)
+            const baseUrl = window.location.origin + window.location.pathname;
+            const fullUrl = `${baseUrl}?line=${inputId}`;
+            
+            box.style.display = 'block';
+            box.innerText = fullUrl;
+            box.title = "點擊複製網址";
+        } else {
+            box.style.display = 'none';
+        }
+    }
+
+    function copyAgentLink() {
+        const text = document.getElementById('agentLinkBox').innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            document.getElementById('copyMsg').innerText = "已複製專屬連結！傳給客戶即可";
+            setTimeout(() => document.getElementById('copyMsg').innerText = "", 3000);
+        });
+    }
+
+    function saveAndUse() {
+        const inputId = document.getElementById('agentLineId').value.trim();
+        if(inputId) {
+            localStorage.setItem('my_agent_line_id', inputId);
+            currentLineId = inputId;
+            updateContactInfo(currentLineId);
+            alert(`設定完成！現在畫面上的諮詢按鈕已連結至 ID: ${inputId}`);
+            closeSettings();
+        }
+    }
+
+    // --- 試算與其他功能 (維持不變) ---
     function updateSmartHint() {
         const year = parseInt(document.getElementById('birthYear').value);
         const hintBox = document.getElementById('smartAgeHint');
         const percentage = parseInt(document.getElementById('lbRetireTime').value);
-        
         hintBox.style.display = 'inline-block';
         if (!year || year < 1900 || year > 2100) {
-            hintBox.innerHTML = '<span style="color:#7f8c8d;">請先輸入上方「出生年份」以計算退休年齡</span>';
-            return;
+            hintBox.innerHTML = '<span style="color:#7f8c8d;">請先輸入上方「出生年份」以計算退休年齡</span>'; return;
         }
-
         let baseAge = 60;
-        if (year >= 1962) { baseAge = 65; } 
-        else if (year === 1958) { baseAge = 61; } 
-        else if (year === 1959) { baseAge = 62; } 
-        else if (year === 1960) { baseAge = 63; } 
-        else if (year === 1961) { baseAge = 64; }
-
+        if (year >= 1962) baseAge = 65; else if (year >= 1958) baseAge = year - 1958 + 61;
         const shiftYears = percentage / 4;
         const finalAge = baseAge + shiftYears;
         let actionText = "";
         if (shiftYears < 0) actionText = ` - ${Math.abs(shiftYears)} 年 (提前)`;
         else if (shiftYears > 0) actionText = ` + ${shiftYears} 年 (延後)`;
-
-        if (shiftYears !== 0) {
-            hintBox.innerHTML = `💡 法定 ${baseAge} 歲${actionText} = <span style="font-size:1.1em; color:#c0392b; background:#fff;">${finalAge} 歲退休</span>`;
-        } else {
-            hintBox.innerHTML = `💡 依據您的出生年，法定請領年齡為：${baseAge} 歲`;
-        }
+        if (shiftYears !== 0) hintBox.innerHTML = `💡 法定 ${baseAge} 歲${actionText} = <span style="font-size:1.1em; color:#c0392b; background:#fff;">${finalAge} 歲退休</span>`;
+        else hintBox.innerHTML = `💡 依據您的出生年，法定請領年齡為：${baseAge} 歲`;
     }
 
     function calculateAll() {
         const lbYears = parseFloat(document.getElementById('lbYears').value) || 0;
         const lbSalary = parseFloat(document.getElementById('lbSalary').value) || 0;
         const lbPercentage = parseInt(document.getElementById('lbRetireTime').value); 
-
         let lbMonthlyA = (lbSalary * lbYears * 0.00775) + 3000;
         let lbMonthlyB = (lbSalary * lbYears * 0.0155);
         let lbBaseMonthly = Math.max(lbMonthlyA, lbMonthlyB);
         let lbMonthly = Math.round(lbBaseMonthly * (1 + (lbPercentage / 100)));
-
         let lbLumpSumUnits = (lbYears <= 15) ? lbYears * 1 : 15 + ((lbYears - 15) * 2);
         if (lbLumpSumUnits > 45) lbLumpSumUnits = 45; 
         let lbLumpSum = Math.round(lbSalary * lbLumpSumUnits);
 
         const ltBalance = parseFloat(document.getElementById('ltBalance').value) || 0;
         const lifeYears = parseFloat(document.getElementById('lifeExpectancy').value) || 24;
-        
         let ltLumpSum = ltBalance;
         let ltMonths = lifeYears * 12;
         let ltMonthly = (ltBalance > 0 && ltMonths > 0) ? Math.round(ltBalance / ltMonths) : 0;
@@ -415,67 +547,28 @@
         let npMonthlyB = (npSalary * npYears * 0.013);
         let npMonthly = (npYears > 0) ? Math.round(Math.max(npMonthlyA, npMonthlyB)) : 0;
         let npLumpSum = 0; 
-
         const isWelfare = document.getElementById('welfareCheck').checked;
         let wfMonthly = isWelfare ? 3879 : 0;
-
         const totalMonthly = lbMonthly + ltMonthly + npMonthly + wfMonthly;
         const totalLumpSum = lbLumpSum + ltLumpSum;
 
         const tbody = document.getElementById('resultBody');
-        let wfDisplay = isWelfare ? 
-            `<tr>
-                <td style="text-align:left;"><span style="color:var(--wf-color);">●</span> 社會福利津貼</td>
-                <td style="color:#2980b9;">$${wfMonthly.toLocaleString()}</td>
-                <td style="color:#bbb;">-</td>
-            </tr>` : '';
-
-        tbody.innerHTML = `
-            <tr>
-                <td style="text-align:left;">
-                    <span style="color:var(--lb-color);">●</span> 勞保年金 
-                    <small style="color:#999;">(${lbPercentage !== 0 ? (lbPercentage > 0 ? '+' : '') + lbPercentage + '%' : '標準'})</small>
-                </td>
-                <td style="color:#2980b9; font-weight:bold;">$${lbMonthly.toLocaleString()}</td>
-                <td style="color:#27ae60;">$${lbLumpSum.toLocaleString()}</td>
-            </tr>
-            <tr>
-                <td style="text-align:left;">
-                    <span style="color:var(--lt-color);">●</span> 勞退新制
-                    <small style="color:#999;">(分${lifeYears}年)</small>
-                </td>
-                <td style="color:#2980b9;">$${ltMonthly.toLocaleString()}</td>
-                <td style="color:#27ae60;">$${ltLumpSum.toLocaleString()}</td>
-            </tr>
-            <tr>
-                <td style="text-align:left;"><span style="color:var(--np-color);">●</span> 國民年金</td>
-                <td style="color:#2980b9;">$${npMonthly.toLocaleString()}</td>
-                <td style="color:#bbb;">-</td>
-            </tr>
-            ${wfDisplay}
-        `;
-
+        let wfDisplay = isWelfare ? `<tr><td style="text-align:left;"><span style="color:var(--wf-color);">●</span> 社會福利津貼</td><td style="color:#2980b9;">$${wfMonthly.toLocaleString()}</td><td style="color:#bbb;">-</td></tr>` : '';
+        tbody.innerHTML = `<tr><td style="text-align:left;"><span style="color:var(--lb-color);">●</span> 勞保年金 <small style="color:#999;">(${lbPercentage !== 0 ? (lbPercentage > 0 ? '+' : '') + lbPercentage + '%' : '標準'})</small></td><td style="color:#2980b9; font-weight:bold;">$${lbMonthly.toLocaleString()}</td><td style="color:#27ae60;">$${lbLumpSum.toLocaleString()}</td></tr><tr><td style="text-align:left;"><span style="color:var(--lt-color);">●</span> 勞退新制 <small style="color:#999;">(分${lifeYears}年)</small></td><td style="color:#2980b9;">$${ltMonthly.toLocaleString()}</td><td style="color:#27ae60;">$${ltLumpSum.toLocaleString()}</td></tr><tr><td style="text-align:left;"><span style="color:var(--np-color);">●</span> 國民年金</td><td style="color:#2980b9;">$${npMonthly.toLocaleString()}</td><td style="color:#bbb;">-</td></tr>${wfDisplay}`;
         document.getElementById('totalMonthly').innerText = "$" + totalMonthly.toLocaleString();
         document.getElementById('totalLumpSum').innerText = "$" + totalLumpSum.toLocaleString();
-
+        
         const chart = document.getElementById('barChart');
         if (totalMonthly > 0) {
-            const pLB = (lbMonthly / totalMonthly) * 100;
-            const pLT = (ltMonthly / totalMonthly) * 100;
-            const pNP = (npMonthly / totalMonthly) * 100;
-            const pWF = (wfMonthly / totalMonthly) * 100;
-
+            const pLB = (lbMonthly / totalMonthly) * 100; const pLT = (ltMonthly / totalMonthly) * 100;
+            const pNP = (npMonthly / totalMonthly) * 100; const pWF = (wfMonthly / totalMonthly) * 100;
             let html = '';
             if(pLB > 0) html += `<div class="bar-segment bg-lb" style="width:${pLB}%">勞保 ${Math.round(pLB)}%</div>`;
             if(pLT > 0) html += `<div class="bar-segment bg-lt" style="width:${pLT}%">勞退 ${Math.round(pLT)}%</div>`;
             if(pNP > 0) html += `<div class="bar-segment bg-np" style="width:${pNP}%">國保 ${Math.round(pNP)}%</div>`;
             if(pWF > 0) html += `<div class="bar-segment bg-wf" style="width:${pWF}%">福利 ${Math.round(pWF)}%</div>`;
-            
             chart.innerHTML = html;
-        } else {
-            chart.innerHTML = `<div style="width:100%; text-align:center; line-height:35px; color:#aaa;">請輸入資料開始試算</div>`;
-        }
-
+        } else { chart.innerHTML = `<div style="width:100%; text-align:center; line-height:35px; color:#aaa;">請輸入資料開始試算</div>`; }
         document.getElementById('resultArea').style.display = 'block';
     }
 
